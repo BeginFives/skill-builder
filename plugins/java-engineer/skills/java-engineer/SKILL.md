@@ -2,14 +2,15 @@
 name: java-engineer
 description: >-
   Write, review, refactor, and debug idiomatic, production-grade Java to a MAANG
-  principal-engineer/architect bar. Covers concurrency (executors, virtual threads, structured
-  concurrency, cancellation), resource and thread leaks, exception discipline, Optional and
-  null-safety, SLF4J + MDC correlation logging, OpenTelemetry/Micrometer observability, Spring and
-  JPA/JDBC pitfalls, security (deserialization, XXE, injection, SSRF), records and sealed types,
-  JUnit 5 testing, and the build gate (mvn compile/test, SpotBugs, dependency-check). Use whenever
-  the user writes, reviews, debugs, tests, or optimizes Java code, edits .java files, works with
-  pom.xml or build.gradle, or asks about threads, executors, exceptions, Spring, Hibernate, streams,
-  or JVM performance — even if they don't say the word "Java".
+  principal-engineer/architect bar on the Java 25 LTS baseline. Covers concurrency (virtual threads,
+  structured concurrency, scoped values, executors, cancellation), resource and thread leaks,
+  exception discipline, Optional and null-safety, SLF4J + MDC correlation logging,
+  OpenTelemetry/Micrometer observability, Spring and JPA/JDBC pitfalls, security (deserialization,
+  XXE, injection, SSRF), records, sealed types and pattern matching, SOLID and design patterns in
+  modern Java, JUnit 5 testing, and the build gate (mvn compile/test, SpotBugs, dependency-check).
+  Use whenever the user writes, reviews, debugs, tests, designs, or optimizes Java code, edits .java
+  files, works with pom.xml or build.gradle, or asks about threads, executors, exceptions, Spring,
+  Hibernate, streams, design patterns, or JVM performance — even if they don't say the word "Java".
 ---
 
 # java-engineer
@@ -21,8 +22,9 @@ discipline, transaction boundaries — which is where the outages actually live.
 **The bar is defined, not implied.** `references/review-rubric.md` is the definition of done: a
 PASS/FAIL checklist whose hard-blocker sections a change may not fail.
 
-Baseline is **Java 21 LTS** (records, sealed types, pattern matching, virtual threads). Where a rule
-depends on a newer version, it says so.
+Baseline is **Java 25 LTS** (records, sealed types, pattern matching, virtual threads, and scoped
+values are all final; structured concurrency is available as a preview). Where a rule depends on a
+specific version, it says so.
 
 ## How to work
 
@@ -81,6 +83,12 @@ into a refactor. A bigger diff is not a better diff.
   injection, XXE, or deserialization bug you just wrote.*
 - **Honor the `equals`/`hashCode` contract whenever you touch either.** *Why: violating it makes
   `HashMap`/`HashSet` lookups fail silently — no exception, just wrong answers.*
+- **Make illegal states unrepresentable.** Records with validating canonical constructors, sealed
+  types for closed sets, enums, and a typed wrapper over a naked `String`/`int` — not a runtime check
+  bolted on afterward. *Why: a state you cannot construct is a bug you cannot ship.*
+- **Reach for a design pattern only when a language feature doesn't already solve it.** Strategy is a
+  lambda, Visitor is a sealed type + exhaustive `switch`, Singleton is an `enum`. *Why: a pattern that
+  adds indirection without removing a real problem is a regression — see Scope discipline.*
 - **The mechanical layer is enforced by tooling.** `mvn -q compile` · `mvn -q test` ·
   `google-java-format` · `dependency-check` are the gate. *Why: the compiler and the test suite catch
   classes of bug no amount of reading will — but they are blind to the judgment layer below.*
@@ -97,6 +105,7 @@ catch these `[SELF]` items:
 - span `recordException` + `setStatus`, and RED metric cardinality
 - **`@Transactional` boundary correctness** — self-invocation silently does nothing
 - **immutability / defensive copies** at API boundaries
+- **design**: an illegal state left representable, or a GoF pattern used where a sealed type / enum / lambda already solves it
 - secret redaction, and whether validation actually happens before use
 
 "SpotBugs will catch it" is not available here. You are the gate.
@@ -115,7 +124,8 @@ Pre-empt the specific excuse — these are the ones Java actually invites:
 | "`Optional.get()` is fine, it's always present" | `NoSuchElementException` in production | `orElseThrow(() -> ...)` with a real message |
 | "`@Transactional`, and I'll call it from this class" | Spring's proxy is bypassed — the annotation silently does nothing | call through the proxy, or move the boundary |
 | "it's just a DTO, I'll add setters" | mutable state escaping across threads | a `record`, or final fields + defensive copies |
-| "`synchronized` around this blocking call is fine" | it **pins** the virtual thread and destroys the benefit | `ReentrantLock` |
+| "I'll stash the request id in a `ThreadLocal` for the forked tasks" | it doesn't propagate into `StructuredTaskScope` forks, and it leaks in pooled threads | a `ScopedValue` (final in 25), bound around the fork |
+| "`instanceof` chains over the subtypes are fine" | adding a subtype silently misses this branch | a `sealed` type + exhaustive `switch` — the compiler finds every site |
 | "string concat in the log reads better" | allocates even when the level is disabled; unstructurable | `log.info("x={}", x)` |
 | "I'll clear the MDC later" | the pooled thread carries it into the next request | clear it in `finally` |
 | "small refactor while I'm here" | unsolicited complexity is a regression | minimal diff; no new abstractions unless asked |
@@ -132,6 +142,8 @@ Read the file whose topic matches the change; don't load all of them.
 | Logging, MDC correlation, traces, metrics | `references/logging-observability.md` |
 | Writing tests, JUnit 5, mocks, Testcontainers | `references/testing.md` |
 | Structuring packages, DI, records/sealed types, immutability | `references/project-layout.md` |
+| SOLID, composition vs inheritance, making illegal states unrepresentable, over-engineering | `references/design-principles.md` |
+| Choosing — or removing — a design pattern in modern Java | `references/design-patterns.md` |
 | Touching a database — JDBC, JPA, pools, transactions | `references/data-stores.md` |
 | Handling untrusted input, XML, deserialization, user URLs | `references/security.md` |
 | A path is hot and you need to prove a speedup | `references/performance.md` |

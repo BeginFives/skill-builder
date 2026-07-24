@@ -41,7 +41,7 @@ your review effort on the `[SELF]` items — the `[TOOL]` items are already cove
 - [ ] **FUTURES ARE JOINED** — FAIL if `executor.submit(...)` returns a `Future` that is dropped: `submit` captures the exception *into the Future*, so an unread Future silently swallows every failure. Use `execute()` only when the task itself logs its own failures. `[TOOL: ErrorProne FutureReturnValueIgnored]`
 - [ ] **BOUNDED POOLS** — FAIL on `Executors.newCachedThreadPool()` on a request path (unbounded platform threads) and on `newFixedThreadPool`'s unbounded `LinkedBlockingQueue`. Use `ThreadPoolExecutor` with a bounded queue **and** an explicit `RejectedExecutionHandler` — the rejection policy is the back-pressure design.
 - [ ] **VIRTUAL THREADS** — FAIL if blocking-I/O fan-out on JDK 21+ uses a small platform pool where `Executors.newVirtualThreadPerTaskExecutor()` is correct; equally FAIL on *pooling* virtual threads (they are per-task and cheap — a pool re-adds the queueing you removed).
-- [ ] **NO PINNING** — FAIL on a `synchronized` block that wraps a blocking call when running on virtual threads (pre-JDK 24 this pins the carrier thread and starves the scheduler). Use `ReentrantLock`.
+- [ ] **PINNING (version-aware)** — On the Java 25 baseline, `synchronized` no longer pins virtual threads (JEP 491, final in JDK 24), so it is *not* a pinning FAIL. FAIL only when (a) the target runtime is JDK 21–23, where `synchronized` around a blocking call pins the carrier — use `ReentrantLock` there; or (b) blocking happens inside a native/JNI frame, which still pins on every version. Prefer `ReentrantLock` for `tryLock`/timed/interruptible acquisition or multiple `Condition`s — not for pinning.
 - [ ] **EXPLICIT EXECUTOR** — FAIL on `CompletableFuture.supplyAsync(fn)` / `.thenApplyAsync(fn)` with no executor argument: the default is the shared `ForkJoinPool.commonPool()` (size = cores−1), which must never see blocking work. Same FAIL for blocking inside `parallelStream()`.
 - [ ] **NO DROPPED ASYNC FAILURES** — FAIL if a `CompletableFuture` chain has no terminal `exceptionally`/`handle`/`whenComplete`; an exception in a stage with no downstream consumer disappears entirely.
 - [ ] **UNCAUGHT-EXCEPTION PATH** — FAIL if a spawned task's `Throwable` has nowhere to go: wrap the task body in try/catch that logs, or set a `Thread.UncaughtExceptionHandler` on the pool's `ThreadFactory`. Also FAIL if the `ThreadFactory` produces unnamed threads — `pool-3-thread-7` is useless in a thread dump.
@@ -267,6 +267,17 @@ This is the layer tools own, not where the skill's value lives — see the `[SEL
 - [ ] FAIL on permissive CORS (`@CrossOrigin("*")` with credentials) and on CSRF disabled for cookie-authenticated state-changing endpoints.
 - [ ] FAIL on user input echoed into an HTML/JS response without contextual output encoding, or into a header without CR/LF stripping.
 - [ ] FAIL on a dependency with a known, reachable CVE left unsuppressed and unjustified. `[TOOL: dependency-check]`
+
+## 15. Design — principles & patterns (`[SELF]`; no tool catches these)
+See `references/design-principles.md` and `references/design-patterns.md`. Scope discipline applies:
+flag genuine design defects, but a minimal correct diff is never a deficiency and unrequested
+abstraction is a regression, not a virtue.
+- [ ] **ILLEGAL STATES** — FAIL if an invariant is enforced by a runtime check that a type could have made unrepresentable (a validating `record` canonical constructor, a `sealed` type, an `enum`, or a typed wrapper over a naked `String`/`int`).
+- [ ] **EXHAUSTIVENESS** — FAIL on an `instanceof`/`switch` chain over the subtypes of what should be a `sealed` type: make it sealed and let an exhaustive `switch` force every site to handle a new variant at compile time.
+- [ ] **PATTERN vs FEATURE** — FAIL on a GoF pattern that a language feature already subsumes: a Strategy class hierarchy where a functional interface + lambda suffices, a hand-rolled Singleton where an `enum` (or DI) is correct, a Visitor where a sealed type + pattern-matching `switch` is clearer, `java.util.Observable` (removed) instead of listeners / `Flow`.
+- [ ] **COMPOSITION** — FAIL on inheritance used purely for code reuse where delegation/composition is the right relationship (no genuine is-a, or a subclass that overrides to *remove* behavior — an LSP break).
+- [ ] **DEPEND ON ABSTRACTIONS** — FAIL if a class news-up its own collaborators instead of accepting them (constructor injection), or if an interface has a single implementation created reflexively — that is speculative abstraction, not DIP.
+- [ ] **COHESION / SURFACE** — FAIL on a class with several unrelated reasons to change (SRP), and on public members that could be package-private — the smallest surface that works is the correct one.
 
 ---
 

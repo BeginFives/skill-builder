@@ -12,5 +12,5 @@
   "build_cmd": "mvn -q compile",
   "test_cmd": "mvn -q test",
   "vuln_cmd": "mvn -q org.owasp:dependency-check-maven:check",
-  "triggers": "Java, .java files, pom.xml or build.gradle, Spring/Spring Boot, virtual threads, executors and concurrency, checked exceptions, Optional, records, sealed types, streams, JUnit"
+  "triggers": "Java, .java files, pom.xml or build.gradle, Spring/Spring Boot, virtual threads, structured concurrency, scoped values, executors and concurrency, checked exceptions, Optional, records, sealed types, pattern matching, streams, SOLID, design patterns, JUnit"
 }

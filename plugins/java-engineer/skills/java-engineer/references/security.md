@@ -4,7 +4,7 @@ Load this when parsing untrusted payloads (JSON/XML/serialized bytes), fetching 
 touching the filesystem or a shell with user data, or sizing anything from a number an attacker sent.
 Governing rule: **treat everything crossing a trust boundary as hostile — validate it, bound it,
 parameterize it.** CVE scanners check your *dependencies*; this file is about the code *you* write.
-Baseline Java 21 — records and sealed types are the enforcement mechanism here, not decoration.
+Baseline Java 25 — records and sealed types are the enforcement mechanism here, not decoration.
 
 ## Contents
 - [Deserialization — Java's signature RCE](#deserialization--javas-signature-rce)
