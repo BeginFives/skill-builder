@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # {{LANG}}-engineer :: PostToolUse gate (the enforcement payload)
 #
-# After any {{LANG_TITLE}} file is written/edited, lint it. On failure this BLOCKS the turn with
-# exit code 2; stderr is fed back to Claude, which must fix it before continuing.
+# After any {{LANG_TITLE}} file is written/edited, run the fast per-edit check. On failure this
+# BLOCKS the turn with exit code 2; stderr is fed back to Claude, which must fix it before continuing.
 #
-# Design note: the per-edit gate runs the FAST, per-file check (lint). Type-check, build, tests and
-# the vulnerability scan run in the Stop full-gate, so a single edit never pays for the whole suite.
+# Design note: this is the FAST check. Full build, tests and the vulnerability scan run in the Stop
+# full-gate, so a single edit never pays for the whole suite. For file-oriented languages that is a
+# per-file linter; for build-oriented languages it is the project's compile step (see LINT_TAKES_FILE).
 #
 # Degrades gracefully (exit 0) when: wrong file type, tool not installed, or no project root.
 #
@@ -36,13 +37,23 @@ file=$(printf '%s' "$json" | get_file_path)
 case "$file" in *.{{EXT_CASE_GLOB}}) ;; *) exit 0 ;; esac
 [ -f "$file" ] || exit 0
 
-# Walk up to the project root ({{PROJECT_MARKER}}); skip if this file isn't in a project.
+# A project root is any directory holding one of the marker files (|-separated: e.g. Maven or Gradle).
+markers="{{PROJECT_MARKER}}"
+has_marker() {
+  local d="$1" m
+  local IFS='|'
+  for m in $markers; do
+    [ -f "$d/$m" ] && return 0
+  done
+  return 1
+}
+
 dir=$(cd "$(dirname "$file")" 2>/dev/null && pwd) || exit 0
 root="$dir"
-while [ "$root" != "/" ] && [ ! -f "$root/{{PROJECT_MARKER}}" ]; do
+while [ "$root" != "/" ] && ! has_marker "$root"; do
   root=$(dirname "$root")
 done
-[ -f "$root/{{PROJECT_MARKER}}" ] || exit 0
+has_marker "$root" || exit 0
 
 lint_cmd="{{LINT_CMD}}"
 [ -n "$lint_cmd" ] || exit 0
@@ -50,8 +61,19 @@ lint_cmd="{{LINT_CMD}}"
 command -v ${lint_cmd%% *} >/dev/null 2>&1 || exit 0
 
 cd "$root" || exit 0
-# shellcheck disable=SC2086
-if ! out=$($lint_cmd "$file" 2>&1); then
+# LINT_TAKES_FILE=true  -> per-file linter; pass the edited file
+# LINT_TAKES_FILE=false -> project-wide check (e.g. a compile step); takes no file argument
+if [ "{{LINT_TAKES_FILE}}" = "true" ]; then
+  # shellcheck disable=SC2086
+  out=$($lint_cmd "$file" 2>&1)
+  rc=$?
+else
+  # shellcheck disable=SC2086
+  out=$($lint_cmd 2>&1)
+  rc=$?
+fi
+
+if [ $rc -ne 0 ]; then
   {
     printf '{{LANG}}-engineer gate FAILED for: %s\n\n' "$file"
     printf '%s\n\n' "$out"

@@ -11,5 +11,6 @@
   "build_cmd": "",
   "test_cmd": "pytest -q",
   "vuln_cmd": "pip-audit",
-  "triggers": "Python, .py files, pyproject.toml or requirements.txt, asyncio, type hints, dataclasses, pytest, packaging, virtualenvs"
+  "triggers": "Python, .py files, pyproject.toml or requirements.txt, asyncio, type hints, dataclasses, pytest, packaging, virtualenvs",
+  "lint_takes_file": "true"
 }

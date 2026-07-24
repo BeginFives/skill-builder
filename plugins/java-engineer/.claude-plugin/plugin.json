@@ -1,0 +1,8 @@
+{
+  "name": "java-engineer",
+  "version": "0.1.0",
+  "author": {
+    "name": "BeginFives"
+  },
+  "description": "Principal-grade Java, enforced. Ships the java-engineer skill with a PASS/FAIL production rubric, a read-only reviewer subagent, a gated implement/review workflow, and blocking hooks that run google-java-format -i · mvn -q compile · mvn -q compile · mvn -q test · mvn -q org.owasp:dependency-check-maven:check so the standard cannot be skipped."
+}

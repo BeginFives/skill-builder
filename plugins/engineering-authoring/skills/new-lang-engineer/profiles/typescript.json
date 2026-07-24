@@ -11,5 +11,6 @@
   "build_cmd": "",
   "test_cmd": "npx --no-install vitest run",
   "vuln_cmd": "npm audit --omit=dev",
-  "triggers": "TypeScript, .ts/.tsx files, tsconfig.json, package.json, async/await, Promises, strict types, generics, discriminated unions, eslint, vitest/jest"
+  "triggers": "TypeScript, .ts/.tsx files, tsconfig.json, package.json, async/await, Promises, strict types, generics, discriminated unions, eslint, vitest/jest",
+  "lint_takes_file": "true"
 }

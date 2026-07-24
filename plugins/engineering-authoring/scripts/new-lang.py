@@ -30,7 +30,7 @@ from pathlib import Path
 
 REQUIRED_KEYS = [
     "lang", "lang_title", "ext", "ext_case", "project_marker", "toolchain_bin",
-    "fmt_cmd", "lint_cmd", "type_cmd", "build_cmd", "test_cmd", "vuln_cmd", "triggers",
+    "fmt_cmd", "lint_cmd", "lint_takes_file", "type_cmd", "build_cmd", "test_cmd", "vuln_cmd", "triggers",
 ]
 
 # template -> (destination relative to the PLUGIN root, executable?)
@@ -106,6 +106,7 @@ def build_substitutions(p: dict) -> dict:
         "TOOLCHAIN_BIN": p["toolchain_bin"],
         "FMT_CMD": p["fmt_cmd"],
         "LINT_CMD": p["lint_cmd"],
+        "LINT_TAKES_FILE": p["lint_takes_file"],
         "TYPE_CMD": p["type_cmd"],
         "BUILD_CMD": p["build_cmd"],
         "TEST_CMD": p["test_cmd"],

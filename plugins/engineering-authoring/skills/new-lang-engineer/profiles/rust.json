@@ -11,5 +11,6 @@
   "build_cmd": "cargo check --all-targets",
   "test_cmd": "cargo test",
   "vuln_cmd": "cargo audit",
-  "triggers": "Rust, .rs files, Cargo.toml, ownership and borrowing, lifetimes, traits, async/tokio, Result and error handling, unsafe, clippy"
+  "triggers": "Rust, .rs files, Cargo.toml, ownership and borrowing, lifetimes, traits, async/tokio, Result and error handling, unsafe, clippy",
+  "lint_takes_file": "false"
 }

@@ -21,7 +21,17 @@ esac
 
 root="${CLAUDE_PROJECT_DIR:-$PWD}"
 cd "$root" 2>/dev/null || exit 0
-[ -f "{{PROJECT_MARKER}}" ] || exit 0
+
+# A project root is any directory holding one of the marker files (|-separated: e.g. Maven or Gradle).
+has_marker() {
+  local m
+  local IFS='|'
+  for m in {{PROJECT_MARKER}}; do
+    [ -f "$m" ] && return 0
+  done
+  return 1
+}
+has_marker || exit 0
 
 fail() {
   {

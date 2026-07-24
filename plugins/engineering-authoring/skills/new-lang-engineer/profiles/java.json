@@ -4,12 +4,13 @@
   "ext": "java",
   "ext_case": "java",
   "project_marker": "pom.xml",
-  "toolchain_bin": "java",
+  "toolchain_bin": "javac",
   "fmt_cmd": "google-java-format -i",
-  "lint_cmd": "",
+  "lint_cmd": "mvn -q compile",
+  "lint_takes_file": "false",
   "type_cmd": "",
-  "build_cmd": "mvn -q -o compile",
-  "test_cmd": "mvn -q -o test",
-  "vuln_cmd": "mvn -q -o org.owasp:dependency-check-maven:check",
-  "triggers": "Java, .java files, pom.xml or build.gradle, Spring, concurrency and executors, Optional, checked exceptions, streams, JUnit"
+  "build_cmd": "mvn -q compile",
+  "test_cmd": "mvn -q test",
+  "vuln_cmd": "mvn -q org.owasp:dependency-check-maven:check",
+  "triggers": "Java, .java files, pom.xml or build.gradle, Spring/Spring Boot, virtual threads, executors and concurrency, checked exceptions, Optional, records, sealed types, streams, JUnit"
 }

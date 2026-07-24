@@ -10,13 +10,37 @@
       "name": "golang-engineer",
       "source": "./plugins/golang-engineer",
       "category": "development",
-      "tags": ["go", "golang", "code-quality", "code-review", "hooks", "testing", "observability"]
+      "tags": [
+        "go",
+        "golang",
+        "code-quality",
+        "code-review",
+        "hooks",
+        "testing",
+        "observability"
+      ]
     },
     {
       "name": "engineering-authoring",
       "source": "./plugins/engineering-authoring",
       "category": "development",
-      "tags": ["authoring", "scaffolding", "templates", "plugin-development"]
+      "tags": [
+        "authoring",
+        "scaffolding",
+        "templates",
+        "plugin-development"
+      ]
+    },
+    {
+      "name": "java-engineer",
+      "source": "./plugins/java-engineer",
+      "category": "development",
+      "tags": [
+        "java",
+        "code-quality",
+        "code-review",
+        "hooks"
+      ]
     }
   ]
 }
