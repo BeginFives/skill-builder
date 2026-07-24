@@ -41,6 +41,17 @@
         "code-review",
         "hooks"
       ]
+    },
+    {
+      "name": "python-engineer",
+      "source": "./plugins/python-engineer",
+      "category": "development",
+      "tags": [
+        "python",
+        "code-quality",
+        "code-review",
+        "hooks"
+      ]
     }
   ]
 }
