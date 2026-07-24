@@ -1,0 +1,27 @@
+# Canonical golangci-lint config for golang-engineer (golangci-lint v1 schema; verified on v1.64.6).
+# On golangci-lint v2, run `golangci-lint migrate` to convert this file (adds `version: "2"` and
+# regroups keys) — the linter set below is unchanged.
+#
+# The point of this file: convert rubric items that would otherwise be self-attested ([SELF]) into
+# machine-checked ([TOOL]) ones — errcheck, noctx/contextcheck, bodyclose, rowserrcheck/sqlclosecheck,
+# copyloopvar all catch hard-blocker rubric failures for free. Copy it into a project's root.
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    # default-enabled, listed for intent
+    - errcheck        # unchecked errors, incl. resp.Body.Close (rubric §3)
+    - govet           # lostcancel, copylocks, and more (rubric §1)
+    - staticcheck     # SA correctness checks (rubric-wide)
+    - ineffassign
+    - unused
+    # explicitly added — the high-value ones for this rubric
+    - contextcheck    # functions that should take/propagate context (§4)
+    - noctx           # HTTP requests sent without context (§4, §8)
+    - bodyclose       # unclosed http.Response.Body (§2)
+    - rowserrcheck    # unchecked sql.Rows.Err (§2)
+    - sqlclosecheck   # unclosed sql.Rows / sql.Stmt (§2)
+    - copyloopvar     # loop-variable capture bugs (§1)
+    - unconvert       # redundant type conversions
+    - gosec           # security: G115 int overflow, SSRF-adjacent, weak crypto (§14)

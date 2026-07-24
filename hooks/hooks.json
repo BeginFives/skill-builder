@@ -1,0 +1,30 @@
+{
+  "description": "golang-engineer enforcement: auto-format then build/vet/lint the edited Go package (blocking), and gate turn completion on the full build/vet/lint/test -race suite.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/go-fmt.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/go-gate.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/go-full-gate.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

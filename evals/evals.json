@@ -1,0 +1,204 @@
+{
+  "skill": "golang-engineer",
+  "version": "0.0.2",
+  "notes": "Evaluation-driven development. The A/B run generates each task twice — a BASELINE arm (a competent Go dev, no skill) and an ENABLED arm (same task + the skill's SKILL.md, review-rubric.md, and the listed enabled_references). Outputs are compiled/tested in evals/harness and graded blind against expected_behavior. The skill earns content only where enabled beats baseline. Triggering and output quality graded separately.",
+  "output_evals": [
+    {
+      "id": "fix-data-race",
+      "prompt": "The Counter in this file is shared across concurrent HTTP handlers. Make it safe for concurrent use.",
+      "input_files": ["evals/cases/race/counter.go"],
+      "enabled_references": ["concurrency.md"],
+      "is_code": true,
+      "expected_behavior": [
+        "Guards ALL accesses (both Inc and Get) with a single sync.Mutex/RWMutex — no partial synchronization (a per-key atomic requires restructuring to sync.Map[*atomic.Int64] and is acceptable only if correct)",
+        "Mutex is a value field, used via pointer receiver, never copied",
+        "Compiles and would pass `go test -race`",
+        "Does not change the public API unnecessarily or introduce a new leak",
+        "Mentions -race as the verification step"
+      ]
+    },
+    {
+      "id": "refactor-accept-context",
+      "prompt": "Refactor FetchUser in this file to be production-ready.",
+      "input_files": ["evals/cases/fetch/user.go"],
+      "enabled_references": ["concurrency.md", "errors.md", "project-layout.md"],
+      "is_code": true,
+      "expected_behavior": [
+        "ctx context.Context is the first parameter and is propagated",
+        "Uses http.NewRequestWithContext (not http.Get) with an explicit-timeout http.Client (not DefaultClient)",
+        "Wraps errors with %w and meaningful context",
+        "Checks the json decode error (no ignored error)",
+        "Checks resp.StatusCode before decoding",
+        "Sets a deadline via context.WithTimeout with defer cancel()"
+      ]
+    },
+    {
+      "id": "table-driven-tests",
+      "prompt": "Write thorough tests for ParseAmount in this file.",
+      "input_files": ["evals/cases/money/parse.go"],
+      "enabled_references": ["testing.md"],
+      "is_code": true,
+      "expected_behavior": [
+        "Table-driven with t.Run subtests and named cases",
+        "Covers error paths (ErrEmpty, ErrSyntax) using errors.Is — not string comparison",
+        "Asserts negative input -> ErrSyntax and out-of-range/overflow input -> ErrSyntax",
+        "Covers edge cases: whitespace, one-digit cents, non-numeric, leading-dot",
+        "Uses t.Parallel() where safe",
+        "Adds a Fuzz target since ParseAmount is a parser (must never panic)",
+        "The generated tests compile and pass against the provided parse.go"
+      ]
+    },
+    {
+      "id": "error-wrapping-endpoint",
+      "prompt": "Add an HTTP handler GET /users/{id} that loads a user via a Store interface and returns JSON. Handle not-found and internal errors correctly. Define the Store interface and a sentinel ErrNotFound.",
+      "input_files": [],
+      "enabled_references": ["errors.md", "logging-observability.md"],
+      "is_code": true,
+      "expected_behavior": [
+        "Sentinel ErrNotFound matched with errors.Is -> 404; other errors -> 500",
+        "No panic on any path; errors wrapped with %w as they propagate",
+        "Logs the error once (at the handler boundary) via slog with the request context",
+        "Does not leak internal error detail to the client body",
+        "Uses r.Context() for the Store call"
+      ]
+    },
+    {
+      "id": "review-diff",
+      "prompt": "Review this file as if it were a pull request. List the blocking issues, most severe first.",
+      "input_files": ["evals/cases/review/server.go"],
+      "enabled_references": ["review-rubric.md"],
+      "is_code": false,
+      "expected_behavior": [
+        "Flags the fire-and-forget goroutines (no owner/ctx/stop) as a leak — hard blocker",
+        "Flags the swallowed error in process (res, _ := doWork)",
+        "Flags the zero-timeout http.Server (Slowloris) — hard blocker",
+        "Flags the ignored ListenAndServe error and missing graceful shutdown",
+        "Flags unstructured logging / missing correlation",
+        "Labels each finding by severity (blocker/major/minor) and ranks the two hard blockers (goroutine ownership, zero-timeout server) above the swallowed error and logging"
+      ]
+    },
+    {
+      "id": "worker-pool",
+      "prompt": "Implement ProcessAll in this file: process every job concurrently with at most `workers` goroutines, stop cleanly on ctx cancellation, and return the first error.",
+      "input_files": ["evals/cases/pool/job.go"],
+      "enabled_references": ["concurrency.md"],
+      "is_code": true,
+      "expected_behavior": [
+        "Bounds concurrency to `workers` (errgroup.SetLimit or a semaphore) — NOT one goroutine per job",
+        "Each worker selects on ctx.Done() so no goroutine blocks forever",
+        "Uses errgroup (or equivalent) so the first error cancels the rest and is returned",
+        "Waits for all goroutines before returning (no leak on early error)",
+        "Writes results race-free (distinct index per goroutine, not append to a shared slice)",
+        "Compiles and would pass `go test -race`"
+      ]
+    },
+    {
+      "id": "observability-mdc",
+      "prompt": "Add request-scoped structured logging with a correlation/trace ID to the Handle function in this file.",
+      "input_files": ["evals/cases/obs/handler.go"],
+      "enabled_references": ["logging-observability.md"],
+      "is_code": true,
+      "expected_behavior": [
+        "Uses log/slog with typed attributes, not fmt/log.Printf",
+        "Correlation/request ID comes from the request context (extracted or seeded at the edge), not a global or a per-call hand-threaded arg",
+        "Logs once at the boundary; message is a stable constant with structured fields",
+        "Does not log the raw user-supplied name as PII without thought / no secrets logged",
+        "Uses the *Context slog methods (InfoContext/LogAttrs with ctx)"
+      ]
+    },
+    {
+      "id": "restraint",
+      "prompt": "Add a `Version string` field to the Config struct and set it from the AppVersion constant.",
+      "input_files": ["evals/cases/restraint/config.go"],
+      "enabled_references": [],
+      "is_code": true,
+      "hard_gate": true,
+      "expected_behavior": [
+        "Adds exactly the Version field and wires it from AppVersion — minimal diff",
+        "Introduces NO new interfaces, goroutines, config knobs, packages, or dependencies",
+        "Does not unsolicited-refactor the surrounding struct, add timeouts/validation, or restructure Config",
+        "Does not add functional options, a constructor, or observability the task didn't ask for",
+        "Result still compiles"
+      ]
+    },
+    {
+      "id": "db-store",
+      "prompt": "Make this account store production-ready: fix GetAccount and implement Transfer atomically.",
+      "input_files": ["evals/cases/db/store.go"],
+      "enabled_references": ["data-stores.md", "errors.md"],
+      "is_code": true,
+      "difficulty": "hard",
+      "expected_behavior": [
+        "GetAccount and Transfer take ctx context.Context as the first parameter and use the *Context query methods (QueryRowContext/ExecContext)",
+        "SQL is parameterized with placeholders, not string-concatenated (fixes the injection in GetAccount)",
+        "Transfer uses BeginTx + defer tx.Rollback + Commit with both updates in one transaction",
+        "sql.ErrNoRows is mapped to a not-found sentinel, not returned raw",
+        "Errors wrapped with %w and meaningful context"
+      ]
+    },
+    {
+      "id": "ssrf-fetch",
+      "prompt": "FetchURL is called with untrusted user-supplied URLs. Make it production-safe.",
+      "input_files": ["evals/cases/ssrf/fetch.go"],
+      "enabled_references": ["security.md", "errors.md"],
+      "is_code": true,
+      "difficulty": "hard",
+      "expected_behavior": [
+        "Blocks SSRF: validates a scheme allowlist and rejects loopback/private/link-local IPs before fetching",
+        "Uses ctx + http.NewRequestWithContext with an explicit-timeout client (not http.Get/DefaultClient)",
+        "Bounds the response body (io.LimitReader or MaxBytesReader), not unbounded io.ReadAll",
+        "Checks resp.StatusCode and wraps errors with %w",
+        "Compiles"
+      ]
+    },
+    {
+      "id": "retry-backoff",
+      "prompt": "Improve CallWithRetry to production-grade retry semantics.",
+      "input_files": ["evals/cases/retry/call.go"],
+      "enabled_references": ["resilience.md"],
+      "is_code": true,
+      "difficulty": "hard",
+      "expected_behavior": [
+        "Capped exponential backoff with jitter, not a fixed sleep",
+        "Honors ctx during the wait (selects on ctx.Done()); does not sleep through cancellation",
+        "Retries only transient errors (errors.Is ErrTransient), not permanent ones",
+        "Bounded attempts; returns/wraps the final error",
+        "Compiles"
+      ]
+    },
+    {
+      "id": "leak-on-cancel",
+      "prompt": "Produce leaks its goroutine if the consumer stops (ctx cancelled). Make it cancellation-safe.",
+      "input_files": ["evals/cases/leak/pipeline.go"],
+      "enabled_references": ["concurrency.md"],
+      "is_code": true,
+      "difficulty": "hard",
+      "expected_behavior": [
+        "The send selects on ctx.Done() so it never blocks forever (no goroutine leak on cancel)",
+        "Stops cleanly on cancellation (returns ctx.Err() or returns) instead of blocking",
+        "Still closes out on the normal completion path",
+        "Does not silently drop items without signalling (returns an error or documents behavior on cancel)",
+        "Compiles and is race-clean"
+      ]
+    }
+  ],
+  "trigger_evals": {
+    "should_trigger": [
+      "Fix the data race in this Counter type",
+      "Why is this goroutine leaking?",
+      "Refactor this function to accept a context",
+      "Write tests for this parser (parse.go attached)",
+      "Add graceful shutdown to my server (main.go attached)",
+      "Review this handler (server.go attached)",
+      "Make this concurrent map safe"
+    ],
+    "should_not_trigger": [
+      "Fix the data race in this Rust struct",
+      "Write pytest tests for this Python function",
+      "Refactor this TypeScript service to accept an AbortSignal",
+      "Explain what a mutex is in general",
+      "What's the best Go web framework?",
+      "Set up a GitHub Actions workflow that builds and tests my Go module"
+    ]
+  }
+}

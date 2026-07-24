@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# eval harness scratch — model-generated candidate packages dropped by the A/B runner
+evals/harness/g[0-9]*/
+evals/harness/_smoke/
+
+# Go build artifacts
+*.test
+*.out
