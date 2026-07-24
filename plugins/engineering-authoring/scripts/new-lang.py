@@ -64,6 +64,9 @@ STUB_BODY = """# {title} — {lang_title}
        * open with one line: "Load this when ..."
        * a "## Contents" anchor list
        * a bolded GOVERNING RULE
+       * where the domain has competing tools (concurrency especially), open with a
+         "which tool, when" decision matrix (situation | reach for | not), and tell the
+         reader to prefer the higher row = the simpler tool
        * concrete, copy-adaptable templates the model adapts instead of reinventing
        * name the failure, not just the virtue ("FAIL if ...")
 
