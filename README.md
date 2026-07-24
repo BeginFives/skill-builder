@@ -5,9 +5,18 @@ A marketplace of per-language plugins. First member: **`golang-engineer`**.
 
 ## Install
 
+This repo is a marketplace, so it installs the same way whether it lives on your disk or on GitHub.
+**Local — no publishing required:**
+
+```
+/plugin marketplace add /Users/los/Development/skill-builder
+/plugin install golang-engineer@engineering-skills
+```
+
+If the repo is ever made public, the identical flow works from GitHub — nothing else changes:
+
 ```
 /plugin marketplace add BeginFives/skill-builder
-/plugin install golang-engineer@engineering-skills
 ```
 
 Each language is a **separate plugin**, so you install only what you work in — a Go developer never
