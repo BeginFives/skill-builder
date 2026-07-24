@@ -5,6 +5,7 @@ race or a leak. The governing rule: **every goroutine has an owner who can wait 
 condition it honors.** If you can't name both, don't spawn it.
 
 ## Contents
+- [Choosing a concurrency tool](#choosing-a-concurrency-tool)
 - [The ownership triad](#the-ownership-triad)
 - [context.Context rules](#contextcontext-rules)
 - [errgroup — the default for fan-out](#errgroup--the-default-for-fan-out)
@@ -13,6 +14,20 @@ condition it honors.** If you can't name both, don't spawn it.
 - [sync primitives](#sync-primitives)
 - [The leak catalogue](#the-leak-catalogue)
 - [Races](#races)
+
+## Choosing a concurrency tool
+Reach for the **first row that fits** — most "concurrency bugs" are the wrong tool for the job.
+
+| The situation | Reach for | Not |
+|---|---|---|
+| Fan out independent tasks; the **first error should cancel the rest** | `errgroup.WithContext` + `g.SetLimit(n)` to bound | a raw `WaitGroup` (drops errors); one goroutine per unbounded input |
+| A **bounded stream** of work items over time | a worker pool: producer closes the jobs channel, N workers `select` on jobs and `ctx.Done()` | unbounded `go` per item |
+| Protect **shared mutable state** | `sync.Mutex` (or `RWMutex` if reads dominate); a counter → `sync/atomic`; one-time init → `sync.Once` | a channel to guard a field — that's mutual exclusion, use a mutex |
+| **One-shot signal / handoff** between goroutines | a channel (unbuffered, or size 1 with a reason) | a mutex + flag polling |
+| **Bound concurrency** against a scarce resource (a pool, a rate limit) | `g.SetLimit(n)` or a buffered-channel semaphore | capping nothing and hoping |
+| **Cancellation / deadlines** across a call tree | `context.Context` — first param, `WithTimeout` on I/O, `defer cancel()` | a shared `bool`/`chan struct{}` you hand-roll |
+
+When two rows both fit, prefer the higher one — it is the simpler tool. Each is expanded below.
 
 ## The ownership triad
 For every `go` / `g.Go(...)`, a reviewer must be able to point to:

@@ -120,6 +120,18 @@ Pre-empt the specific excuse — these are the ones Python actually invites:
 | "mypy is noisy — I'll annotate `Any`" | `Any` at a boundary disables checking downstream | type it properly, or `object` + narrowing |
 | "small refactor while I'm here" | unsolicited complexity is a regression | minimal diff; no new abstractions unless asked |
 
+## Concurrency — which model? (full matrix in `references/concurrency.md`)
+
+**The bound picks the model — the GIL is why.** Reach for the first that fits:
+
+- **I/O-bound, async-native libraries** → `asyncio` with `TaskGroup` (not bare `create_task`).
+- **I/O-bound but the library blocks** (`requests`, sync DB driver) → `await asyncio.to_thread(...)`, never call it inline in a coroutine.
+- **I/O-bound, small, no async stack** → a `ThreadPoolExecutor`.
+- **CPU-bound pure Python** → `ProcessPoolExecutor` — threads give **no** speedup (the GIL serializes bytecode).
+- **CPU-bound, heavy numeric** → a native lib (`numpy`/`polars`) or a release-the-GIL extension.
+- **First failure cancels the rest** → `asyncio.TaskGroup` (raises an `ExceptionGroup`).
+- **Bound in-flight work against a scarce resource** → `asyncio.Semaphore`, not unbounded fan-out.
+
 ## Reference index (progressive disclosure — load on demand)
 
 Read the file whose topic matches the change; don't load all of them.

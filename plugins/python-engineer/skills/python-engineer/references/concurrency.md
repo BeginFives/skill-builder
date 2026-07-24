@@ -6,6 +6,7 @@ strong reference, a deadline, and a cancellation path it re-raises.** If you can
 start it. Baseline 3.11+.
 
 ## Contents
+- [Choosing a concurrency model](#choosing-a-concurrency-model)
 - [Task ownership — the weak-reference footgun](#task-ownership--the-weak-reference-footgun)
 - [TaskGroup — the default fan-out](#taskgroup--the-default-fan-out)
 - [ExceptionGroup and except\*](#exceptiongroup-and-except)
@@ -16,6 +17,27 @@ start it. Baseline 3.11+.
 - [Threads, the GIL and processes](#threads-the-gil-and-processes)
 - [Queues, backpressure and shutdown](#queues-backpressure-and-shutdown)
 - [The leak catalogue](#the-leak-catalogue)
+
+## Choosing a concurrency model
+**The bound picks the model — the GIL is why.** I/O-bound work waits, so many can share one thread
+(`asyncio`) or a few threads; CPU-bound pure-Python work computes, and the GIL serializes bytecode so
+threads give **no** speedup — that needs processes or a native library. Get this wrong and every
+downstream micro-optimization is irrelevant. Reach for the first row that fits:
+
+| The situation | Reach for | Not |
+|---|---|---|
+| **I/O-bound**, many concurrent calls, libraries are async-native | `asyncio` — `TaskGroup` over bare `create_task` | threads (heavier); processes (pointless IPC) |
+| I/O-bound but the library **blocks** (`requests`, a sync DB driver, `time.sleep`) | `await asyncio.to_thread(fn, …)` from async, else a `ThreadPoolExecutor` | calling it inline in a coroutine — it stalls the whole loop |
+| I/O-bound, small and simple, no async stack in play | a `ThreadPoolExecutor` | rewriting the world to async for a handful of calls |
+| **CPU-bound** pure Python | `ProcessPoolExecutor` (worker importable at module level; tune `chunksize`) | threads or async — the GIL means no speedup |
+| CPU-bound, heavy numeric | a native lib (`numpy`/`polars`) or a release-the-GIL extension (Cython/Rust) | pure-Python parallelism |
+| Fan-out where the **first failure cancels the siblings** | `asyncio.TaskGroup` (3.11+) — raises an `ExceptionGroup`, cancels the rest | `gather()` without `return_exceptions`/`except*` handling |
+| **Bound in-flight** work against a scarce resource (a pool, a rate limit) | `asyncio.Semaphore` (async) or a bounded pool | unbounded fan-out |
+| Background work that must **outlive the request** | own the task (a strong ref) + a shutdown path, or a separate worker | a bare `create_task` — it can be GC'd mid-flight |
+
+Do not mix a blocking call into the async row: an `async def` that calls anything blocking stalls every
+other task on the loop (see [Never block the event loop](#never-block-the-event-loop)). Templates per
+bound live in `performance.md`.
 
 ## Task ownership — the weak-reference footgun
 `asyncio.create_task` returns the **only strong reference**: the loop's registry is a `WeakSet` (still
