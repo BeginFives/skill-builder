@@ -9,6 +9,7 @@ Baseline is **Java 25 LTS**: virtual threads, records, sealed types, and pattern
 is still **preview** in 25 (JEP 505) — every snippet using it is marked and paired with a stable form.
 
 ## Contents
+- [Choosing a concurrency tool](#choosing-a-concurrency-tool)
 - [The ownership triad](#the-ownership-triad)
 - [ExecutorService lifecycle](#executorservice-lifecycle)
 - [Virtual threads — the default for blocking I/O](#virtual-threads--the-default-for-blocking-io)
@@ -20,6 +21,23 @@ is still **preview** in 25 (JEP 505) — every snippet using it is marked and pa
 - [Shared state](#shared-state)
 - [ThreadLocal in pooled threads](#threadlocal-in-pooled-threads)
 - [The leak catalogue](#the-leak-catalogue)
+
+## Choosing a concurrency tool
+Reach for the **first row that fits** — most "concurrency bugs" are really the wrong tool for the job.
+The governing split for threads: **blocking/waiting → virtual; computing → platform.**
+
+| The situation | Reach for | Not |
+|---|---|---|
+| Fan out many **independent blocking-I/O** calls (HTTP/DB/RPC) | `Executors.newVirtualThreadPerTaskExecutor()` — one virtual thread per task | a bounded platform pool; **never pool** virtual threads |
+| Fan out where the **first failure should cancel the siblings**, joined as a unit | `StructuredTaskScope.open(Joiner.awaitAllSuccessfulOrThrow())` **(Java 25 preview)**; stable fallback: virtual-thread executor + `invokeAll(tasks, timeout, unit)` | hand-rolled `Future` juggling with manual cancellation |
+| **CPU-bound** parallelism | a **platform** `ThreadPoolExecutor` sized ≈ CPU cores; or `parallelStream()` for a pure, side-effect-free map/reduce | virtual threads (no speedup — carrier-bound); `parallelStream` for *blocking* work (it uses the shared common pool) |
+| **Compose** async stages (transform/combine results without blocking a thread) | `CompletableFuture` **with an explicit executor** | `supplyAsync(fn)` on the default common pool for blocking work |
+| **Bound in-flight** calls against a limited resource (a 20-conn DB pool, a rate-limited API) | a `Semaphore` **permit count** | capping the *thread* count — virtual threads are free, the dependency is not |
+| Guard **shared mutable state** | immutability first; then `ConcurrentHashMap`/atomics, or `synchronized`/`ReentrantLock` for a critical section | a queue/handoff for what is really just mutual exclusion |
+| **Periodic / delayed** work | `ScheduledExecutorService` (own its lifecycle, name its threads) | `java.util.Timer` (one thread; one task's exception kills the rest) |
+| Carry **request-scoped context** into forks | `ScopedValue` (final in 25) — see [Scoped values](#scoped-values--request-context-that-crosses-forks) | `ThreadLocal` (doesn't propagate into forks; leaks in pools) |
+
+Each row is expanded below. When two rows both seem to fit, prefer the higher one — it is the simpler tool.
 
 ## The ownership triad
 For every `submit` / `fork` / `Thread.start`, a reviewer must be able to point to:

@@ -130,6 +130,19 @@ Pre-empt the specific excuse — these are the ones Java actually invites:
 | "I'll clear the MDC later" | the pooled thread carries it into the next request | clear it in `finally` |
 | "small refactor while I'm here" | unsolicited complexity is a regression | minimal diff; no new abstractions unless asked |
 
+## Concurrency — which tool? (full matrix in `references/concurrency.md`)
+
+Reach for the first that fits — most "concurrency bugs" are the wrong tool. Threads:
+**blocking/waiting → virtual; computing → platform.**
+
+- **Blocking-I/O fan-out** → `Executors.newVirtualThreadPerTaskExecutor()`, one virtual thread per task — never pool them.
+- **Fan-out where the first failure cancels the rest** → `StructuredTaskScope` (Java 25 preview); stable fallback: a virtual-thread executor + `invokeAll(tasks, timeout, unit)`.
+- **CPU-bound** → a *platform* pool sized to cores; virtual threads give no speedup here.
+- **Compose async results** → `CompletableFuture` with an **explicit** executor (never the common pool for blocking work).
+- **Bound in-flight calls against a scarce resource** (DB pool, rate-limited API) → a `Semaphore` permit count, not a thread cap.
+- **Shared mutable state** → immutability first, then `ConcurrentHashMap`/atomics or a lock.
+- **Request context into forks** → `ScopedValue` (final in 25), not `ThreadLocal`.
+
 ## Reference index (progressive disclosure — load on demand)
 
 Read the file whose topic matches the change; don't load all of them.
