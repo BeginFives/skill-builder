@@ -1,0 +1,8 @@
+{
+  "name": "golang-engineer",
+  "version": "1.0.0",
+  "author": {
+    "name": "BeginFives"
+  },
+  "description": "MAANG-principal-grade Go, enforced. Ships the golang-engineer skill (concurrency, leaks, errors, MDC logging, observability, data stores, security, resilience) with a 16-section PASS/FAIL rubric, a read-only reviewer subagent, a gated implement/review workflow, and blocking hooks that run gofmt, go vet, golangci-lint and go test -race so the standard cannot be skipped."
+}

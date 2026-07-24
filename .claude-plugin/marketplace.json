@@ -1,0 +1,22 @@
+{
+  "name": "engineering-skills",
+  "description": "Production-grade engineering skills with enforced quality gates. Each language is its own plugin: a principal-engineer rubric, a read-only reviewer subagent, a gated implement/review workflow, and blocking hooks that run the real toolchain so the standard cannot be skipped.",
+  "owner": {
+    "name": "BeginFives",
+    "url": "https://github.com/BeginFives/skill-builder"
+  },
+  "plugins": [
+    {
+      "name": "golang-engineer",
+      "source": "./plugins/golang-engineer",
+      "category": "development",
+      "tags": ["go", "golang", "code-quality", "code-review", "hooks", "testing", "observability"]
+    },
+    {
+      "name": "engineering-authoring",
+      "source": "./plugins/engineering-authoring",
+      "category": "development",
+      "tags": ["authoring", "scaffolding", "templates", "plugin-development"]
+    }
+  ]
+}

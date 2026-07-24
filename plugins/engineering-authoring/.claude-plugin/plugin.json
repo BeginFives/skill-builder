@@ -1,0 +1,8 @@
+{
+  "name": "engineering-authoring",
+  "version": "1.0.0",
+  "author": {
+    "name": "BeginFives"
+  },
+  "description": "The mold for building <lang>-engineer plugins. Ships /new-lang-engineer plus a generator that scaffolds a complete language member — skill, PASS/FAIL rubric, reviewer subagent, implement/review workflows, blocking gate scripts and hook wiring — from a small tool-table profile. Structure is generated; the language expertise is left as marked TODOs for the author."
+}

@@ -18,13 +18,21 @@ wiring can't drift.
 
 ## 1. Scaffold
 
+Each language is its **own installable plugin** under `plugins/<lang>-engineer/`, so a Go developer
+never pays the context or hook cost of Rust. The generator writes the whole plugin and registers it
+in the marketplace:
+
 ```bash
-scripts/new-lang.py <lang>            # python | rust | typescript | java
-scripts/new-lang.py <lang> --dry-run  # preview first
+plugins/engineering-authoring/scripts/new-lang.py <lang>            # python | rust | typescript | java
+plugins/engineering-authoring/scripts/new-lang.py <lang> --dry-run  # preview first
+plugins/engineering-authoring/scripts/new-lang.py <lang> --check    # CI drift detector
 ```
 
-For a language with no profile, copy `profiles/python.json`, fill in the tool table, and pass
-`--profile path/to/profile.json`. A profile is just the language's commands:
+`--check` regenerates the mechanical files (plugin manifest, hooks, gate scripts) and diffs them
+against what's committed — run it in CI so a hand-edited member can't silently drift from the mold.
+
+For a language with no profile, copy `skills/new-lang-engineer/profiles/python.json`, fill in the tool
+table, and pass `--profile path/to/profile.json`. A profile is just the language's commands:
 
 | key | meaning |
 |---|---|
@@ -64,12 +72,15 @@ Never assume a hook works. Feed it a payload directly:
 ```bash
 # should BLOCK -> exit 2
 printf '{"tool_name":"Edit","tool_input":{"file_path":"/abs/path/broken.<ext>"}}' \
-  | bash scripts/<lang>-gate.sh; echo "exit=$?"
+  | bash plugins/<lang>-engineer/scripts/<lang>-gate.sh; echo "exit=$?"
 
 # should PASS -> exit 0
 printf '{"tool_name":"Edit","tool_input":{"file_path":"/abs/path/clean.<ext>"}}' \
-  | bash scripts/<lang>-gate.sh; echo "exit=$?"
+  | bash plugins/<lang>-engineer/scripts/<lang>-gate.sh; echo "exit=$?"
 ```
+
+If the language's linter isn't installed locally, prove the *blocking path* with a stub linter on
+`PATH` that exits non-zero — otherwise you've only tested the graceful-degradation branch.
 
 Also confirm it exits 0 for a non-matching file type, when the toolchain is absent, and outside a
 project root — a gate that blocks on something the developer can't act on is worse than no gate.
