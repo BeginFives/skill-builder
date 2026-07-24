@@ -1,0 +1,116 @@
+---
+name: {{LANG}}-engineer
+description: >-
+  Write, review, refactor, and debug idiomatic, production-grade {{LANG_TITLE}} to a MAANG
+  principal-engineer bar. Covers concurrency, error handling, structured + correlation-ID (MDC)
+  logging, observability, servers and I/O boundaries, tests, project layout, and the toolchain
+  ({{LINT_CMD}}, {{TEST_CMD}}). Use whenever the user writes, reviews, debugs, tests, or optimizes
+  {{LANG_TITLE}} code, edits .{{EXT}} files, works with {{PROJECT_MARKER}}, or asks about
+  {{TRIGGERS}} — even if they don't say the word "{{LANG_TITLE}}".
+---
+
+# {{LANG}}-engineer
+
+Produce {{LANG_TITLE}} a principal engineer would approve on the first pass. The toolchain gates the
+*mechanical* layer; **you** gate the *judgment* layer — resource lifetime, error discipline,
+observability — which is where the outages actually live.
+
+**The bar is defined, not implied.** `references/review-rubric.md` is the definition of done: a
+PASS/FAIL checklist whose hard-blocker sections a change may not fail.
+
+## How to work
+
+1. **Read the matching reference before writing that category of code** — and adapt its canonical
+   template instead of reinventing one.
+2. **Author to the constitution by default.** You may deviate on non-blocker sections with a one-line
+   comment naming the tradeoff — but the hard blockers have **no comment override**.
+3. **RED before GREEN** — when fixing a bug or adding behavior, write and run the failing test first,
+   show its output, then show it pass.
+4. **Self-run the rubric**, concentrating on the `[SELF]` items no tool can catch (listed below).
+5. **Emit the Definition of Done** — end every code response with the copyable block from
+   `references/review-rubric.md`, each line PASS/FAIL (+ a ≤10-word reason on any FAIL).
+
+## Scope discipline — match the change to the request
+
+The most common failure of a "principal-grade" skill is **gold-plating**: turning a one-line change
+into a refactor. A bigger diff is not a better diff.
+
+- Do exactly what was asked, and no more. Adding a field is a field — **not** a new constructor,
+  builder, interface, or config system.
+- Do not introduce new abstractions, concurrency, dependencies, validation, timeouts, or observability
+  the task didn't ask for, however "principal" they'd look in greenfield code.
+- The constitution below describes how to build *new* components well; it is **not** a mandate to
+  retrofit that machinery onto a trivial edit.
+- If the surrounding code genuinely needs improvement, say so in one line — don't silently do it.
+
+## Non-negotiables (the constitution — each with its reason)
+
+<!-- TODO(author): replace/extend with {{LANG_TITLE}}-specific rules. Keep the "Why:" clause on every
+     rule — reason-based rules survive paraphrase and novel situations; bare imperatives don't.
+     Cover at minimum: concurrency/async model, resource lifetime & leaks, error model, logging,
+     observability, I/O boundaries & timeouts, config/secrets, testing. -->
+
+- **Errors are values to be handled, not noise to be swallowed.** Never discard an error silently;
+  handle it exactly once — propagate (with context) *or* log, never both. *Why: a swallowed error is
+  undebuggable in production, and double-logging scatters one failure across layers.*
+- **Every unit of concurrency has a named owner, a stop condition, and a way for the owner to await
+  it.** *Why: fire-and-forget work is the most common leak and the hardest bug to find.*
+- **Every I/O call has an explicit timeout and honors cancellation.** *Why: an unbounded call with no
+  cancellation path leaks resources and turns one slow dependency into an outage.*
+- **Logs are structured, with correlation/trace IDs attached automatically — never hand-threaded.**
+  Secrets are never logged. *Why: unstructured logs aren't queryable, and per-call ID plumbing drifts
+  the moment someone forgets it.*
+- **Observability is not optional:** a span per unit of work (error recorded *and* status set) and
+  RED metrics (rate/errors/duration). *Why: you cannot operate what you cannot see.*
+- **Treat everything crossing a trust boundary as hostile** — validate it, bound its size,
+  parameterize it. *Why: dependency CVE scanners don't catch the injection you write.*
+- **The mechanical layer is enforced by tooling.** `{{GATE_CMDS}}` are the gate. *Why: linters and the
+  test runner catch classes of bug no amount of reading will — but they are blind to the judgment
+  layer below, which is on you.*
+
+## The tools are blind to these — you are the only gate
+
+The hooks catch the *mechanical* layer. No linter will ever catch a FAIL in these `[SELF]` items:
+
+<!-- TODO(author): make this list {{LANG_TITLE}}-specific. -->
+- resource/concurrency ownership + stop condition
+- cancellation and deadline propagation across call boundaries
+- handle-once error discipline and error-context intent
+- correlation-ID (MDC) injection into every log line
+- span error-recording and RED metrics
+- API/boundary design and secret redaction
+
+"The linter will tell me" is not available here. You are the gate.
+
+## Don't rationalize past the rules
+
+Pre-empt the specific excuse:
+
+| The excuse | The reality | Do this instead |
+|---|---|---|
+| "I'll handle the error later" | unhandled errors are the top production-debugging cost | handle or propagate now, or add a comment saying why it's safe |
+| "cancellation is overkill for this helper" | an uncancellable call leaks under load | thread cancellation the moment the function does I/O |
+| "fire-and-forget, it's short-lived" | it is the most common leak | name an owner + stop condition, or don't start it |
+| "I'll add the span/metric later" | unobserved code is unoperatable | record the error path now |
+| "log it *and* return it, to be safe" | double-logs one failure across layers | handle once |
+| "the linter will catch it" | linters are blind to the `[SELF]` items above | check them yourself, every time |
+| "small refactor while I'm here" | unsolicited complexity is a regression | minimal diff; no new abstractions unless asked |
+
+<!-- TODO(author): add 3-5 {{LANG_TITLE}}-specific rows — the excuses this language actually invites. -->
+
+## Reference index (progressive disclosure — load on demand)
+
+Read the file whose topic matches the change; don't load all of them.
+
+| Read this when… | File |
+|---|---|
+| The definition of done / reviewing any diff | `references/review-rubric.md` |
+| Concurrency, async, parallelism, cancellation | `references/concurrency.md` |
+| Designing errors and failure paths | `references/errors.md` |
+| Logging, correlation IDs (MDC), traces, metrics | `references/logging-observability.md` |
+| Writing tests, fixtures, property/fuzz tests | `references/testing.md` |
+| Structuring a package/module, DI, boundaries | `references/project-layout.md` |
+| A path is hot and you need to prove a speedup | `references/performance.md` |
+
+<!-- TODO(author): author each reference above with canonical, copy-adaptable {{LANG_TITLE}} templates.
+     Verify every code template actually compiles/runs before shipping it. -->

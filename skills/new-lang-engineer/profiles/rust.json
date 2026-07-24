@@ -1,0 +1,15 @@
+{
+  "lang": "rust",
+  "lang_title": "Rust",
+  "ext": "rs",
+  "ext_case": "rs",
+  "project_marker": "Cargo.toml",
+  "toolchain_bin": "cargo",
+  "fmt_cmd": "cargo fmt --",
+  "lint_cmd": "cargo clippy --all-targets -- -D warnings",
+  "type_cmd": "",
+  "build_cmd": "cargo check --all-targets",
+  "test_cmd": "cargo test",
+  "vuln_cmd": "cargo audit",
+  "triggers": "Rust, .rs files, Cargo.toml, ownership and borrowing, lifetimes, traits, async/tokio, Result and error handling, unsafe, clippy"
+}

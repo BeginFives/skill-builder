@@ -31,11 +31,37 @@ skills/golang-engineer/        the knowledge + the rubric (auto-loads on Go work
                                resilience, review-rubric.md, .golangci.yml
 skills/go-implement/           /go-implement — the gated plan→RED→implement→gate→review loop
 skills/go-review/              /go-review — delegates to the read-only reviewer subagent
+skills/new-lang-engineer/      the mold: templates + profiles for adding a language
 agents/go-reviewer.md          isolated, read-only reviewer bound to the rubric
 hooks/hooks.json               wires the gates
-scripts/                       the gates themselves (single source of truth)
+scripts/                       the gates themselves (single source of truth) + new-lang.py
 evals/                         A/B eval harness + fixtures (dev-only)
 ```
+
+## Adding a language
+
+`golang-engineer` is member #1 of a family. To add another:
+
+```bash
+scripts/new-lang.py python --dry-run   # preview
+scripts/new-lang.py python             # scaffold
+```
+
+Profiles ship for `python`, `rust`, `typescript`, `java`; any other language just needs a small
+profile JSON (its file extensions, project marker, and tool table). The generator does the
+**deterministic** half — file tree, tool-table substitution, hook wiring (idempotent), `chmod` — so
+every member has an identical shape and the wiring can't drift. It deliberately does **not** write
+the language expertise: every generated file carries `TODO(author)` markers where real judgment is
+required, and `/new-lang-engineer` walks you through filling them.
+
+| Shared (from the blueprint) | Language-specific (you author) |
+|---|---|
+| 3-layer architecture, hook wiring, gate-script shape | the tool table (profile) |
+| scope discipline, anti-rationalization format | the language's rules and excuses |
+| Definition-of-Done block, `[TOOL]`/`[SELF]` legend | the rubric's concrete PASS/FAIL lines |
+| reviewer-subagent shape, implement/review workflows | which items are `[TOOL]` vs `[SELF]` |
+
+Verify the generated gate actually blocks before trusting it — the skill documents exactly how.
 
 ## What blocks, and when
 

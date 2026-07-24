@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# {{LANG}}-engineer :: PostToolUse gate (the enforcement payload)
+#
+# After any {{LANG_TITLE}} file is written/edited, lint it. On failure this BLOCKS the turn with
+# exit code 2; stderr is fed back to Claude, which must fix it before continuing.
+#
+# Design note: the per-edit gate runs the FAST, per-file check (lint). Type-check, build, tests and
+# the vulnerability scan run in the Stop full-gate, so a single edit never pays for the whole suite.
+#
+# Degrades gracefully (exit 0) when: wrong file type, tool not installed, or no project root.
+#
+# Escape hatches:
+#   {{LANG_UPPER}}_ENGINEER_SKIP_GATE=1  -> disable this gate entirely
+set -uo pipefail
+
+[ "${{{LANG_UPPER}}_ENGINEER_SKIP_GATE:-0}" = "1" ] && exit 0
+
+json=$(cat)
+
+get_file_path() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.tool_input.file_path // empty' 2>/dev/null
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import sys,json
+d=json.load(sys.stdin)
+ti=d.get("tool_input") or {}
+print(ti.get("file_path") or "")' 2>/dev/null
+  else
+    sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1
+  fi
+}
+
+file=$(printf '%s' "$json" | get_file_path)
+
+[ -n "${file:-}" ] || exit 0
+case "$file" in *.{{EXT_CASE_GLOB}}) ;; *) exit 0 ;; esac
+[ -f "$file" ] || exit 0
+
+# Walk up to the project root ({{PROJECT_MARKER}}); skip if this file isn't in a project.
+dir=$(cd "$(dirname "$file")" 2>/dev/null && pwd) || exit 0
+root="$dir"
+while [ "$root" != "/" ] && [ ! -f "$root/{{PROJECT_MARKER}}" ]; do
+  root=$(dirname "$root")
+done
+[ -f "$root/{{PROJECT_MARKER}}" ] || exit 0
+
+lint_cmd="{{LINT_CMD}}"
+[ -n "$lint_cmd" ] || exit 0
+# shellcheck disable=SC2086
+command -v ${lint_cmd%% *} >/dev/null 2>&1 || exit 0
+
+cd "$root" || exit 0
+# shellcheck disable=SC2086
+if ! out=$($lint_cmd "$file" 2>&1); then
+  {
+    printf '{{LANG}}-engineer gate FAILED for: %s\n\n' "$file"
+    printf '%s\n\n' "$out"
+    printf 'This is a hard blocker (review-rubric tooling gate). Fix it before doing anything else.\n'
+  } >&2
+  exit 2
+fi
+
+exit 0

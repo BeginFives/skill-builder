@@ -1,0 +1,15 @@
+{
+  "lang": "typescript",
+  "lang_title": "TypeScript",
+  "ext": "ts",
+  "ext_case": "ts|tsx|mts|cts",
+  "project_marker": "package.json",
+  "toolchain_bin": "node",
+  "fmt_cmd": "npx --no-install prettier --write",
+  "lint_cmd": "npx --no-install eslint",
+  "type_cmd": "npx --no-install tsc --noEmit",
+  "build_cmd": "",
+  "test_cmd": "npx --no-install vitest run",
+  "vuln_cmd": "npm audit --omit=dev",
+  "triggers": "TypeScript, .ts/.tsx files, tsconfig.json, package.json, async/await, Promises, strict types, generics, discriminated unions, eslint, vitest/jest"
+}

@@ -1,0 +1,15 @@
+{
+  "lang": "python",
+  "lang_title": "Python",
+  "ext": "py",
+  "ext_case": "py",
+  "project_marker": "pyproject.toml",
+  "toolchain_bin": "python3",
+  "fmt_cmd": "ruff format",
+  "lint_cmd": "ruff check",
+  "type_cmd": "mypy",
+  "build_cmd": "",
+  "test_cmd": "pytest -q",
+  "vuln_cmd": "pip-audit",
+  "triggers": "Python, .py files, pyproject.toml or requirements.txt, asyncio, type hints, dataclasses, pytest, packaging, virtualenvs"
+}

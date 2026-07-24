@@ -1,0 +1,96 @@
+# {{LANG_TITLE}} Production Rubric — the checkable "principal engineer" standard
+
+> Every item is a concrete PASS/FAIL gate. A change ships only if it passes every **applicable** item.
+> Sections 1–4 and the tooling gate are **hard blockers** — failing any is not principal-grade
+> regardless of features.
+>
+> <!-- TODO(author): cite the authoritative sources for {{LANG_TITLE}} (official style guide, stdlib
+>      docs, the community style guide) so the guidance is defensible, not folklore. -->
+
+## Definition of Done — emit this block, filled in, with every code response
+
+Copy this and mark each line **PASS**/**FAIL** (+ a ≤10-word reason on any FAIL). This emitted evidence
+— not a silent "I reviewed it" — is what makes output dependable. The hard-blocker sections have
+**no comment override** (a commented-out leak is still a leak).
+
+```
+[SELF] concurrency — every unit has an owner + stop condition (or none started)   §1
+[SELF] cancellation — deadlines/timeouts on I/O, cancellation propagated          §4
+[SELF] errors      — handled exactly once, context preserved, none swallowed      §3
+[SELF] leaks       — every resource released on all paths; nothing unbounded      §2
+[SELF] log/obs     — structured logs + correlation IDs, no secrets; errors recorded §5-7
+[TOOL] {{GATE_CMDS}}
+```
+
+**Legend used throughout:** `[TOOL]` = a named check catches it (the hooks run these — you get them
+for free); `[SELF]` = **no tool can see it, you are the only gate.** Concentrate your review effort on
+the `[SELF]` items.
+
+<!-- TODO(author): fill each section below with concrete PASS/FAIL lines for {{LANG_TITLE}}.
+     Model them on the golang-engineer rubric: each line names the exact failure, and where a linter
+     catches it, tag it [TOOL: <linter>] so the model knows which FAILs the gate already covers. -->
+
+## 1. Concurrency & unit-of-work lifecycle
+- [ ] Every task/thread/coroutine has an identifiable owner that can await it. No fire-and-forget.
+- [ ] Every one has a documented stop condition and cannot block forever.
+- [ ] Shared mutable state is synchronized on **all** accesses, or owned by a single unit.
+- [ ] Bounded parallelism over unbounded input (no one-task-per-item over a large collection).
+
+## 2. Leaks (resource & memory)
+- [ ] Every acquired resource (file, connection, lock, subscription, timer) is released on all paths.
+- [ ] Caches/collections that grow with input have a bound (TTL, size cap, eviction).
+
+## 3. Errors
+- [ ] No error is discarded silently; each is handled exactly once (propagate **or** log, never both).
+- [ ] Error context is preserved when propagating (the original cause is not lost).
+- [ ] Failures that are expected are modeled as values/typed errors, not as crashes.
+- [ ] Process-fatal exits happen only at the entrypoint, never in library code.
+
+## 4. Cancellation, deadlines & timeouts
+- [ ] Every outbound I/O call carries a timeout/deadline.
+- [ ] Cancellation propagates to everything the call started, and is honored promptly.
+
+## 5. Structured logging
+- [ ] Structured logger with typed fields; message is a stable constant, not interpolated.
+- [ ] Levels used correctly; no secrets/PII logged (sensitive types redact themselves).
+
+## 6. Correlation / MDC
+- [ ] Request/correlation/trace IDs are seeded at the entry edge and attached to **every** log line
+      automatically — not hand-threaded into each call.
+- [ ] IDs propagate outbound so downstream logs join the same trace.
+
+## 7. Observability
+- [ ] A span per meaningful unit of work; on failure the error is recorded **and** status set.
+- [ ] RED metrics (rate, errors, duration); attribute/label cardinality bounded.
+
+## 8. I/O boundaries (HTTP/RPC/servers)
+- [ ] Explicit timeouts on servers and clients; graceful shutdown drains in-flight work.
+- [ ] Request bodies size-limited; inputs validated before use.
+
+## 9. Configuration & secrets
+- [ ] Config validated at startup (fail fast); secrets from env/secret manager, never committed or logged.
+
+## 10. Tooling gate (all `[TOOL]`; the hooks run these)
+- [ ] `{{FMT_CMD}}` clean
+- [ ] `{{LINT_CMD}}` clean
+- [ ] `{{TYPE_CMD}}` clean
+- [ ] `{{BUILD_CMD}}` succeeds
+- [ ] `{{TEST_CMD}}` passes
+- [ ] `{{VULN_CMD}}` reports nothing actionable
+
+## 11. Project layout & dependency injection
+- [ ] Clear module boundaries; dependencies injected, not reached for globally; no hidden init side effects.
+
+## 12. Performance (measure first)
+- [ ] Optimization claims backed by a benchmark or profile — never guessed. Cold paths left readable.
+
+<!-- TODO(author): add language-specific sections (e.g. data stores, security, resilience) mirroring
+     golang-engineer §13-15 where they apply. -->
+
+---
+
+### How the skill uses this rubric
+1. Author to the constitution by default.
+2. Self-run every applicable checkbox; fix each FAIL or justify it (hard blockers: no override).
+3. Emit the Definition-of-Done block above as evidence.
+4. The **hooks** enforce the `[TOOL]` half deterministically; the rubric makes the `[SELF]` half checkable.
