@@ -33,6 +33,7 @@ var ErrNotFound = errors.New("not found") // exported as ErrXxx
 type ValidationError struct {
     Field string
     Msg   string
+    inner error // optional wrapped cause; returned by Unwrap below
 }
 func (e *ValidationError) Error() string { return e.Field + ": " + e.Msg }
 ```

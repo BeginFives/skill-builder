@@ -30,7 +30,7 @@ func withRetry(ctx context.Context, maxAttempts int, op func(context.Context) er
         if err = op(ctx); err == nil || !isRetryable(err) {
             return err // success, or a permanent error — don't retry
         }
-        backoff := min(base<<attempt, maxDelay)
+        backoff := min(base<<min(attempt, 30), maxDelay) // cap the shift so base<<attempt can't overflow int64
         delay := time.Duration(rand.Int64N(int64(backoff))) // full jitter: [0, backoff)
         t := time.NewTimer(delay)
         select {

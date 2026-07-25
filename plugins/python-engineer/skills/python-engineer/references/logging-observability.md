@@ -40,8 +40,9 @@ file**; you then own rotation, disk, and a second copy of every line. Levels: DE
 (milestone), WARNING (recoverable oddity), ERROR (actionable — a human triages it).
 
 **3.12+**: handler I/O blocks the calling thread and stalls the event loop, so put a queue in front —
-`{"class": "logging.handlers.QueueHandler", "handlers": ["stdout"], "filters": ["context"]}` as the
-root's only handler. `dictConfig` builds the listener; you must start and drain it:
+add `"queue": {"class": "logging.handlers.QueueHandler", "handlers": ["stdout"], "filters": ["context"]}`
+to the `handlers` map and make `["queue"]` the root's only handler. `dictConfig` builds the listener;
+you must start and drain it (that "queue" key is what `getHandlerByName("queue")` below resolves):
 ```python
 qh = cast(logging.handlers.QueueHandler, logging.getHandlerByName("queue"))
 if (listener := qh.listener) is not None:

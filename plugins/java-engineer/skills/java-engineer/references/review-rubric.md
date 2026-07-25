@@ -7,7 +7,7 @@
 > to "production-grade and operable."
 >
 > Sourced from: the JDK javadoc (`java.util.concurrent`, `java.net.http`, `java.time`,
-> `AutoCloseable`), JEP 444 (virtual threads) and JEP 453 (structured concurrency), *Effective
+> `AutoCloseable`), JEP 444 (virtual threads) and JEP 505 (structured concurrency, Java 25 preview), *Effective
 > Java* 3e, *Java Concurrency in Practice*, the Google Java Style Guide, the SLF4J/Logback
 > manuals, OpenTelemetry-Java and Micrometer docs, the Spring Framework/Boot reference, HikariCP
 > docs, OWASP Top 10 + Cheat Sheet Series, and the SpotBugs / find-sec-bugs / Error Prone /

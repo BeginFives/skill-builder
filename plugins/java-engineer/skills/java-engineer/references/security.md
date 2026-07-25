@@ -143,7 +143,7 @@ static boolean isInternal(InetAddress a) {
   byte[] b = a.getAddress();                                              // ranges the JDK predicates miss:
   if (b.length == 4) {
     int b0 = b[0] & 0xff, b1 = b[1] & 0xff;
-    return (b0 == 100 && b1 >= 64 && b1 <= 127) || (b0 == 192 && b1 == 0); // 100.64/10 CGNAT, 192.0.0/24
+    return (b0 == 100 && b1 >= 64 && b1 <= 127) || (b0 == 192 && b1 == 0); // 100.64/10 CGNAT; 192.0.0.0/16 (over-blocks, fail-safe)
   }
   return (b[0] & 0xfe) == 0xfc;                                            // fc00::/7 IPv6 unique-local
 }

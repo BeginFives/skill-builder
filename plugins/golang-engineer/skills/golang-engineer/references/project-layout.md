@@ -49,6 +49,14 @@ func NewService(store Store, logger *slog.Logger) *Service { // deps in, concret
 When a constructor has optional/growing configuration, prefer functional options over a giant param
 list or a mutable config struct:
 ```go
+// Alternative form of the Service above — pick one; don't combine them in one file. This variant
+// carries a timeout field the options set.
+type Service struct {
+    store   Store
+    logger  *slog.Logger
+    timeout time.Duration
+}
+
 type Option func(*Service)
 
 func WithTimeout(d time.Duration) Option { return func(s *Service) { s.timeout = d } }

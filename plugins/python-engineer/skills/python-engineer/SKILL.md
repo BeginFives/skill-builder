@@ -81,9 +81,9 @@ into a refactor. A bigger diff is not a better diff.
 - **Treat everything crossing a trust boundary as hostile:** never unpickle untrusted bytes, use
   `yaml.safe_load`, never `shell=True` with interpolation, parameterize SQL. *Why: in Python these
   aren't hardening niceties — each one is remote code execution.*
-- **The mechanical layer is enforced by tooling.** `uvx ruff check` · `uvx mypy` · `uv run pytest -q`
-  · `uvx pip-audit` are the gate. *Why: they catch classes of bug no amount of reading will — but
-  they are blind to the judgment layer below.*
+- **The mechanical layer is enforced by tooling.** `uvx ruff format` · `uvx ruff check` · `uvx mypy` ·
+  `uv run pytest -q` are the hook gate (`uvx pip-audit` runs in CI). *Why: they catch classes of bug no
+  amount of reading will — but they are blind to the judgment layer below.*
 
 ## The tools are blind to these — you are the only gate
 
