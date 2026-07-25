@@ -269,7 +269,7 @@ This is the layer tools own, not where the skill's value lives — see the `[SEL
 - [ ] FAIL on a dependency with a known, reachable CVE left unsuppressed and unjustified. `[TOOL: dependency-check]`
 
 ## 15. Design — principles & patterns (`[SELF]`; no tool catches these)
-See `references/design-principles.md` and `references/design-patterns.md`. Scope discipline applies:
+See `design-principles.md` and `design-patterns.md`. Scope discipline applies:
 flag genuine design defects, but a minimal correct diff is never a deficiency and unrequested
 abstraction is a regression, not a virtue.
 - [ ] **ILLEGAL STATES** — FAIL if an invariant is enforced by a runtime check that a type could have made unrepresentable (a validating `record` canonical constructor, a `sealed` type, an `enum`, or a typed wrapper over a naked `String`/`int`).

@@ -196,7 +196,7 @@ Contrast with `ThreadLocal`: a `ThreadLocal` is mutable, must be cleared in a `f
 the next pooled request (below), and is **not** inherited by a `StructuredTaskScope` fork — the child
 reads `null`. Use `ScopedValue` for new request-context plumbing; reserve `ThreadLocal` for what you
 can't rebind (e.g. a third-party API that reads one). MDC/logging correlation still rides `ThreadLocal`
-inside SLF4J — see `references/logging-observability.md`: seed the MDC at the edge, clear it in
+inside SLF4J — see `logging-observability.md`: seed the MDC at the edge, clear it in
 `finally`, and bridge from a `ScopedValue` at the log boundary rather than mutating context mid-request.
 
 ## CompletableFuture done right
