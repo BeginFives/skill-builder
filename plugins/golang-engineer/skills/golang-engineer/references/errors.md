@@ -50,7 +50,7 @@ if errors.Is(err, ErrNotFound) {           // matches sentinels through the chai
 }
 var ve *ValidationError
 if errors.As(err, &ve) {                    // extracts a typed error through the chain
-    log.Warn("invalid input", "field", ve.Field)
+    slog.Warn("invalid input", "field", ve.Field)
 }
 ```
 

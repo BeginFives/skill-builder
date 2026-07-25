@@ -116,7 +116,7 @@ try:
 except* ConnectionError as eg:      # eg.exceptions: matching leaves from ALL failed children
     metrics.upstream_errors.inc(len(eg.exceptions))
 except* ValueError as eg:           # both clauses can fire for the same group — no first-match-wins
-    raise BadRequest(str(eg)) from eg
+    raise BadRequestError(str(eg)) from eg
 ```
 
 You cannot mix `except*` and plain `except` in one `try`. Do **not** unwrap a group to its first

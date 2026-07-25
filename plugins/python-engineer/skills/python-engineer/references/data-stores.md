@@ -184,7 +184,7 @@ def create_user(session: Session, email: str, org_id: int) -> User:
         session.flush()                        # the constraint fires here, inside our boundary
     except IntegrityError as exc:
         session.rollback()                     # the session is unusable until you do
-        raise DuplicateEmail(email) from exc   # `from` keeps the cause for the log, not the caller
+        raise DuplicateEmailError(email) from exc   # `from` keeps the cause for the log, not the caller
     return user
 ```
 - SQLAlchemy wraps the driver exception; `exc.orig` is the real one. Discriminate on that, never on

@@ -25,3 +25,23 @@ linters:
     - copyloopvar     # loop-variable capture bugs (§1)
     - unconvert       # redundant type conversions
     - gosec           # security: G115 int overflow, SSRF-adjacent, weak crypto (§14)
+
+# Accommodations for known-safe patterns this skill's own templates use. Verified: with these,
+# `golangci-lint run` (v1.64.6) passes clean against every reference template. Keep them narrow —
+# they encode documented false positives, not a blanket silence.
+linters-settings:
+  errcheck:
+    exclude-functions:
+      - (*database/sql.Tx).Rollback   # rollback-after-Commit is a documented no-op; error intentionally ignored (data-stores.md)
+
+issues:
+  exclude-rules:
+    # graceful-shutdown derives a FRESH deadline on purpose — the request ctx is already cancelled (project-layout.md)
+    - text: "Non-inherited new context"
+      linters: [contextcheck]
+    # panic-recovery middleware reads ctx from *http.Request in a deferred closure, not a ctx param (errors.md)
+    - text: "should pass the context parameter"
+      linters: [contextcheck]
+    # jitter uses math/rand/v2 by design — not security-sensitive (resilience.md says so explicitly)
+    - text: "G404"
+      linters: [gosec]

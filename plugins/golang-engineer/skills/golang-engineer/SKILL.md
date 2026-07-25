@@ -20,7 +20,7 @@ layer; **you** gate the *judgment* layer — ownership, context, error disciplin
 which is where the leaks and outages actually live.
 
 **The bar is defined, not implied.** `references/review-rubric.md` is the definition of done: a
-12-section PASS/FAIL checklist. Sections 1–4 (concurrency, leaks, errors, context) and 10 (tooling)
+15-section PASS/FAIL checklist. Sections 1–4 (concurrency, leaks, errors, context) and 10 (tooling)
 are **hard blockers** — code failing any of them is not shippable regardless of features.
 
 ## How to work
@@ -30,7 +30,7 @@ are **hard blockers** — code failing any of them is not shippable regardless o
    adapt its canonical template instead of reinventing one.
 2. **Author to the constitution by default** — context-first signatures, errors-as-values, goroutine
    ownership stated in a comment, `slog` for logs, explicit timeouts. You may deviate on the
-   *non-blocker* sections (§5–9, §11–12) with a one-line comment naming the tradeoff — but **§1–4 and
+   *non-blocker* sections (§5–9, §11–15) with a one-line comment naming the tradeoff — but **§1–4 and
    §10 are hard blockers with no comment override.** A commented-out leak is still a leak.
 3. **RED before GREEN** — when fixing a bug or adding behavior, write and run the failing test first,
    show its failing output, then show it pass after the change. Emitted test evidence is the strongest

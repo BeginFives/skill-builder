@@ -26,12 +26,16 @@ Copy this and mark each line **PASS**/**FAIL** (+ a ≤10-word reason on any FAI
 [SELF] leaks        — try-with-resources on every AutoCloseable; MDC/ThreadLocal cleared    §2
 [SELF] log/obs      — SLF4J {} + MDC traceId, no secrets; recordException + setStatus(ERROR) §5–7
 [TOOL] google-java-format -i (no diff) · mvn -q compile · mvn -q test                       §10
-[TOOL] mvn org.owasp:dependency-check-maven:check (no actionable CVE)                       §10
+[CI]   dependency-check (no actionable CVE); SpotBugs/ErrorProne once enabled               §10
 ```
 
-**Legend used throughout this rubric:** `[TOOL]` = a named check catches it (the enforcement hooks run
-these — you get them for free); `[SELF]` = **no tool can see it, you are the only gate.** Concentrate
-your review effort on the `[SELF]` items — the `[TOOL]` items are already covered by the gate.
+**Legend used throughout this rubric:** `[TOOL]` = a named check catches it; the enforcement **hooks
+run the core gate** (`google-java-format`, `mvn compile`, `mvn test`) on every edit and at turn end, so
+those are covered automatically. `[CI]` = also tool-caught but heavier or networked — the vulnerability
+scan (`dependency-check`) and the deeper static analyzers (SpotBugs / ErrorProne / NullAway /
+Checkstyle), which are **not enabled by default**; add them to the build and run in CI. So a
+`[TOOL: SpotBugs]` tag means "SpotBugs catches this *once you enable it*", not "already green". `[SELF]`
+= **no tool can see it, you are the only gate.** Concentrate review effort on the `[SELF]` items.
 
 ## 1. Concurrency & task lifecycle — HARD BLOCKER (no comment override)
 

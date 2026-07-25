@@ -30,7 +30,7 @@ src/test/java/com/acme/orders/     mirrors main; same package ⇒ can test packa
 - One Maven/Gradle module per independently releasable artifact — never one per layer. "No cycles,
   no reach-in" is a wish unless a test enforces it: an ArchUnit rule in `src/test/java`
   (`noClasses().that().resideInAPackage("..billing..").should().dependOnClassesThat()...`).
-- Pin `<release>21</release>` and `-parameters` in the build. *Why: frameworks that bind by
+- Pin `<release>25</release>` and `-parameters` in the build. *Why: frameworks that bind by
   parameter name (config binding, JSON, JPA) degrade silently without `-parameters`.*
 
 ## Constructor injection — always

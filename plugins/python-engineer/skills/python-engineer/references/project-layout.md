@@ -56,7 +56,7 @@ packages = ["src/acme_orders"]            # src/ layout must be declared, not in
 [tool.ruff]
 line-length = 100
 [tool.ruff.lint]
-select = ["E", "F", "B", "I", "UP", "SIM", "RUF", "ASYNC", "S", "TID", "PL"]  # B = bugbear
+select = ["E", "F", "B", "I", "N", "UP", "SIM", "RUF", "ASYNC", "S", "TID", "PL"]  # incl. N (N818: Error suffix). Authoritative required set: review-rubric.md §10
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]                     # assert is the point in tests
 

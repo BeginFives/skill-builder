@@ -3,7 +3,7 @@
 > This is the crown-jewel content for the `golang-engineer` skill. Every item is a concrete
 > PASS/FAIL gate. A change ships only if it passes every **applicable** item. Sections 1–4
 > (concurrency, leaks, errors, context) and 10 (tooling gates) are **hard blockers** — failing
-> any is not MAANG-grade regardless of features. Sections 5–9, 11–12 elevate "correct" to
+> any is not MAANG-grade regardless of features. Sections 5–9, 11–15 elevate "correct" to
 > "production-grade and operable."
 >
 > Sourced from: Effective Go, Google Go Style Guide, Uber Go Style Guide, go.dev/blog
@@ -22,13 +22,16 @@ Copy this and mark each line **PASS**/**FAIL** (+ a ≤10-word reason on any FAI
 [SELF] errors     — returned-or-logged once, %w-wrapped, none ignored, no edge panic  §3
 [SELF] leaks      — timers/tickers Stop()'d, resources Closed, no unbounded map/goroutine  §2
 [SELF] log/obs    — slog + correlation IDs, no secrets; span RecordError+SetStatus on error §5–7
-[TOOL] gofmt -l . (empty) · go vet ./... · staticcheck ./... · golangci-lint run       §10
-[TOOL] go test -race ./... · govulncheck ./... · go mod tidy (no diff)                 §10
+[TOOL] gofmt -l . (empty) · go vet ./... · staticcheck/golangci-lint run · go test -race ./...  §10
+[CI]   govulncheck ./... · go mod tidy (no diff)                                               §10
 ```
 
-**Legend used throughout this rubric:** `[TOOL]` = a named check catches it (the enforcement hooks run
-these — you get them for free); `[SELF]` = **no tool can see it, you are the only gate.** Concentrate
-your review effort on the `[SELF]` items — the `[TOOL]` items are already covered by the gate.
+**Legend used throughout this rubric:** `[TOOL]` = a named check catches it, and the enforcement
+**hooks run the core gate** (`gofmt`, `go vet`, `golangci-lint`, `go build`, `go test -race`) on every
+edit and at turn end — so those are covered automatically. `[CI]` = also tool-caught, but heavier or
+networked (`govulncheck`, `go mod tidy`) — run it in CI, **not** the fast local hook, so treat it as a
+must-run you own rather than something already green. `[SELF]` = **no tool can see it, you are the only
+gate.** Concentrate review effort on the `[SELF]` items.
 
 ## 1. Concurrency & goroutine lifecycle
 - [ ] **OWNERSHIP** — every `go` / `g.Go(...)` has an identifiable owner that can wait for it (WaitGroup / errgroup / done-channel). No fire-and-forget.
@@ -110,8 +113,8 @@ This is the layer tools own, not where the skill's value lives — see the `[SEL
       copyloopvar, ineffassign, unconvert, gosec`) — ship the canonical `references/.golangci.yml`,
       don't defer to "the repo config".
 - [ ] `go test -race ./...` passes.
-- [ ] `govulncheck ./...` reports no reachable known vulnerabilities.
-- [ ] `go mod tidy` leaves no diff; deps minimal/pinned; no leftover `replace` hacks.
+- [ ] `[CI]` `govulncheck ./...` reports no reachable known vulnerabilities. *(Run in CI — not the local hook.)*
+- [ ] `[CI]` `go mod tidy` leaves no diff; deps minimal/pinned; no leftover `replace` hacks.
 - [ ] Build reproducible; `unused`/`deadcode` clean.
 
 > Several items the sections above mark `[SELF]` become `[TOOL]` once the named linters are enabled:
@@ -128,7 +131,7 @@ This is the layer tools own, not where the skill's value lives — see the `[SEL
 
 ## 12. Performance (measure first)
 - [ ] Optimization claims backed by pprof (CPU/heap/block/mutex) or benchmarks — not guessed.
-- [ ] Hot-path `Benchmark` funcs use `b.ReportAllocs()`/`b.ResetTimer()`; allocations understood.
+- [ ] Hot-path `Benchmark` funcs use `b.ReportAllocs()` and the `for b.Loop()` form (Go 1.24+, which excludes setup automatically; else `b.ResetTimer()`); allocations understood.
 - [ ] Slices/maps preallocated with known capacity (`make(T, 0, n)`); no per-iteration allocs in hot loops (`time.After`, repeated `fmt.Sprintf`, `[]byte`↔`string` round-trips).
 - [ ] Escape analysis (`go build -gcflags=-m`) checked for hot values that unexpectedly escape; `sync.Pool` for high-churn buffers where profiling justifies it.
 - [ ] `strings.Builder`/`bytes.Buffer` for loop concatenation; `io.Copy`/streaming over full-buffering large payloads.
@@ -163,4 +166,4 @@ This is the layer tools own, not where the skill's value lives — see the `[SEL
 1. **Author** code context-first, errors-as-values, goroutine-ownership-documented **by default**.
 2. **Self-run** every applicable checkbox before returning; for any FAIL, fix or add a one-line justifying comment naming the tradeoff.
 3. **Emit** the section-10 commands as the definition of done.
-4. The **hooks** (not the model's memory) enforce section 10 deterministically; the **rubric** makes sections 1–9, 11–12 checkable by the model and the reviewer subagent.
+4. The **hooks** (not the model's memory) enforce section 10 deterministically; the **rubric** makes sections 1–9, 11–15 checkable by the model and the reviewer subagent.

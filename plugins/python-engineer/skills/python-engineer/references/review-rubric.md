@@ -25,14 +25,15 @@ Copy this and mark each line **PASS**/**FAIL** (+ a ≤10-word reason on any FAI
 [SELF] exceptions — narrow except, `raise ... from`, nothing swallowed, handled exactly once  §3
 [SELF] cancel     — timeout on every I/O call; CancelledError re-raised, deadline propagated  §4
 [SELF] log/obs    — structured logs + contextvar IDs, no secrets; span records error + status §5–7
-[TOOL] uvx ruff format (no diff) · uvx ruff check · uvx mypy                                  §10
-[TOOL] uv run pytest -q · uvx pip-audit                                                       §10
+[TOOL] uvx ruff format (no diff) · uvx ruff check · uvx mypy · uv run pytest -q               §10
+[CI]   uvx pip-audit (no actionable finding)                                                  §10
 ```
 
-**Legend used throughout this rubric:** `[TOOL: <tool>]` = a named check catches it (the enforcement
-hooks run these — you get them for free); everything untagged is `[SELF]` = **no tool can see it, you
-are the only gate.** Concentrate your review effort on the untagged items — the `[TOOL]` ones are
-already covered by the gate.
+**Legend used throughout this rubric:** `[TOOL: <tool>]` = a named check catches it; the enforcement
+**hooks run the core gate** (`ruff format`, `ruff check`, `mypy`, `pytest`) on every edit and at turn
+end, so those are covered automatically. `[CI]` = also tool-caught but networked (`pip-audit`) — run it
+in CI, **not** the fast local hook. Everything untagged is `[SELF]` = **no tool can see it, you are the
+only gate.** Concentrate review effort on the untagged items.
 
 ## 1. Concurrency & task lifecycle — HARD BLOCKER (no comment override)
 
